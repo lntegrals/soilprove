@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Poppins } from "next/font/google";
+import { Inter, Fraunces } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -9,23 +9,25 @@ const inter = Inter({
   display: "swap",
 });
 
-const poppins = Poppins({
+const fraunces = Fraunces({
   subsets: ["latin"],
-  weight: ["600", "700"],
-  variable: "--font-poppins",
+  weight: ["500", "600", "700"],
+  variable: "--font-fraunces",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "SoilProve — Prove What Your Soil Data Is Worth",
+  title: "SoilProve · Field-specific nitrogen decisions",
   description:
-    "Field-specific nitrogen decisions farmers can understand, agronomists can review, and outcomes can validate. Prototype demo for the Cape Girardeau Vibeathon.",
+    "SoilProve translates live USDA soil data and NWS weather into defensible nitrogen decisions for corn — reviewable by an agronomist and validated by a real trial.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${poppins.variable}`}>
-      <body className="min-h-screen bg-white font-sans text-ink">{children}</body>
+    <html lang="en" className={`${inter.variable} ${fraunces.variable}`}>
+      <body className="min-h-screen bg-canvas font-sans text-ink-900 antialiased">
+        {children}
+      </body>
     </html>
   );
 }

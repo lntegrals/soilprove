@@ -5,3 +5,13 @@ out
 .DS_Store
 *.tsbuildinfo
 next-env.d.ts
+
+# Local tooling
+.claude/
+.playwright-mcp/
+
+# Vercel
+.vercel
+
+# Local screenshots / capture artifacts (not referenced in docs)
+*.png

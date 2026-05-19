@@ -1,321 +1,296 @@
-"use client";
+import Link from "next/link";
+import { Logo } from "@/components/ui/Logo";
+import { Badge } from "@/components/ui/Badge";
 
-import { useCallback, useMemo, useState } from "react";
-import { ALT_FIELDS, DEFAULT_FIELD } from "@/lib/demo-data";
-import {
-  AgronomistReview,
-  FieldIntake,
-  OutcomeData,
-  TrialPlan,
-} from "@/lib/types";
-import {
-  buildDefaultTrialPlan,
-  buildPeerCohort,
-  calculateRecommendation,
-  summarizeOutcome,
-} from "@/lib/recommend";
-import { MobileTabs, StepId, Topbar } from "@/components/Topbar";
-import { Hero } from "@/components/Hero";
-import { IntakePanel } from "@/components/IntakePanel";
-import { RecommendationPanel } from "@/components/RecommendationPanel";
-import { PeerEvidencePanel } from "@/components/PeerEvidencePanel";
-import { AgronomistPanel } from "@/components/AgronomistPanel";
-import { TrialPlannerPanel } from "@/components/TrialPlannerPanel";
-import { OutcomePanel } from "@/components/OutcomePanel";
-import { HonestyFooter } from "@/components/HonestyFooter";
-import { FlowFooter } from "@/components/FlowFooter";
-
-const DEFAULT_REVIEW: AgronomistReview = {
-  status: "pending",
-  reviewerName: "J. Reyes, CCA",
-  reviewerLicense: "CCA #4413 — IA / IL",
-  rationale:
-    "Field history fits the cohort. Comfortable with the recommendation on a trial strip first.",
-};
-
-export default function Page() {
-  const [scenarioIndex, setScenarioIndex] = useState(0);
-  const [intake, setIntake] = useState<FieldIntake>(DEFAULT_FIELD);
-  const [review, setReview] = useState<AgronomistReview>(DEFAULT_REVIEW);
-  const [trialOverride, setTrialOverride] = useState<Partial<TrialPlan>>({});
-  const [outcomeOverride, setOutcomeOverride] = useState<Partial<OutcomeData>>(
-    {}
-  );
-  const [step, setStep] = useState<StepId>("intake");
-
-  const rec = useMemo(() => calculateRecommendation(intake), [intake]);
-  const cohort = useMemo(() => buildPeerCohort(intake, rec), [intake, rec]);
-
-  const effectiveRate = useMemo(() => {
-    if (review.status === "approved_with_note" && review.adjustedRate != null) {
-      return review.adjustedRate;
-    }
-    if (review.status === "needs_revision") {
-      // Halfway back toward the farmer's plan as a conservative ask.
-      return Math.round((rec.recommendedRate + intake.currentNRate) / 2);
-    }
-    return rec.recommendedRate;
-  }, [review, rec, intake.currentNRate]);
-
-  const trial = useMemo<TrialPlan>(() => {
-    const base = buildDefaultTrialPlan(intake, rec);
-    const withApprovedRate: TrialPlan = { ...base, trialRate: effectiveRate };
-    return { ...withApprovedRate, ...trialOverride };
-  }, [intake, rec, effectiveRate, trialOverride]);
-
-  const outcome = useMemo<OutcomeData>(() => {
-    const seededAppliedTrial = trial.trialRate;
-    const seededAppliedControl = trial.controlRate;
-    const seededYieldControl = rec.expectedYield - 1.2;
-    const seededYieldTrial = rec.expectedYield + 0.7;
-
-    const merged: OutcomeData = {
-      reported: true,
-      appliedRateTrial:
-        outcomeOverride.appliedRateTrial ?? seededAppliedTrial,
-      appliedRateControl:
-        outcomeOverride.appliedRateControl ?? seededAppliedControl,
-      yieldTrial: outcomeOverride.yieldTrial ?? seededYieldTrial,
-      yieldControl: outcomeOverride.yieldControl ?? seededYieldControl,
-      fertilizerSpendActual: 0,
-      fertilizerSpendBaseline: 0,
-      marginDelta: 0,
-      verdict: "inconclusive",
-      verdictNote: "",
-    };
-
-    const sum = summarizeOutcome({
-      trial,
-      trialYield: merged.yieldTrial,
-      controlYield: merged.yieldControl,
-      trialAppliedRate: merged.appliedRateTrial,
-      controlAppliedRate: merged.appliedRateControl,
-      cornPrice: intake.cornPrice,
-      nitrogenPrice: intake.nitrogenPrice,
-    });
-
-    return {
-      ...merged,
-      fertilizerSpendActual: sum.fertilizerSpendActual,
-      fertilizerSpendBaseline: sum.fertilizerSpendBaseline,
-      marginDelta: sum.marginDelta,
-      verdict: sum.verdict,
-      verdictNote: sum.verdictNote,
-    };
-  }, [trial, rec, outcomeOverride, intake.cornPrice, intake.nitrogenPrice]);
-
-  const onLoadScenario = useCallback((idx: number) => {
-    setScenarioIndex(idx);
-    setIntake(ALT_FIELDS[idx]);
-    setReview(DEFAULT_REVIEW);
-    setTrialOverride({});
-    setOutcomeOverride({});
-  }, []);
-
-  const onIntakeChange = useCallback((patch: Partial<FieldIntake>) => {
-    setIntake((prev) => ({ ...prev, ...patch }));
-  }, []);
-
-  const onReviewChange = useCallback((patch: Partial<AgronomistReview>) => {
-    setReview((prev) => ({ ...prev, ...patch }));
-  }, []);
-
-  const onApprove = useCallback(() => {
-    setReview((prev) => ({
-      ...prev,
-      status: "approved",
-      reviewedAt: new Date().toLocaleDateString(),
-      adjustedRate: undefined,
-    }));
-  }, []);
-
-  const onApproveWithAdjustment = useCallback(() => {
-    setReview((prev) => ({
-      ...prev,
-      status: "approved_with_note",
-      reviewedAt: new Date().toLocaleDateString(),
-    }));
-  }, []);
-
-  const onRequestRevision = useCallback(() => {
-    setReview((prev) => ({
-      ...prev,
-      status: "needs_revision",
-      reviewedAt: new Date().toLocaleDateString(),
-    }));
-  }, []);
-
-  const onTrialChange = useCallback((patch: Partial<TrialPlan>) => {
-    setTrialOverride((prev) => ({ ...prev, ...patch }));
-  }, []);
-
-  const onOutcomeChange = useCallback((patch: Partial<OutcomeData>) => {
-    setOutcomeOverride((prev) => ({ ...prev, ...patch }));
-  }, []);
-
-  const onOutcomeReset = useCallback(() => {
-    setOutcomeOverride({});
-  }, []);
-
-  const onDownloadCsv = useCallback(() => {
-    const rows = [
-      ["field", intake.fieldName],
-      ["county", `${intake.county}, ${intake.state}`],
-      ["total_acres", intake.acres.toString()],
-      ["previous_crop", intake.previousCrop],
-      ["soil_type", intake.soilType],
-      ["current_rate_lb_per_ac", intake.currentNRate.toString()],
-      ["soilprove_rate_lb_per_ac", rec.recommendedRate.toString()],
-      ["effective_rate_lb_per_ac", effectiveRate.toString()],
-      ["trial_acres", trial.trialAcres.toString()],
-      ["control_acres", trial.controlAcres.toString()],
-      ["control_rate", trial.controlRate.toString()],
-      ["trial_rate", trial.trialRate.toString()],
-      ["corn_price", intake.cornPrice.toFixed(2)],
-      ["nitrogen_price", intake.nitrogenPrice.toFixed(2)],
-      [
-        "expected_fertilizer_savings_trial",
-        (
-          (trial.controlRate - trial.trialRate) *
-          intake.nitrogenPrice *
-          trial.trialAcres
-        ).toFixed(2),
-      ],
-      ["reviewer_name", review.reviewerName],
-      ["reviewer_license", review.reviewerLicense],
-      ["review_status", review.status],
-      ["reviewer_rationale", JSON.stringify(review.rationale)],
-      ["agronomy_basis", "MRTN-style reference + demo adjustments"],
-      ["note", "Prototype demo. Modeled evidence. Not real customer data."],
-    ];
-    const csv = rows.map((r) => r.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${intake.fieldName.replace(/\s+/g, "_")}_trial_plan.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, [intake, rec, effectiveRate, trial, review]);
-
-  const onStepChange = useCallback((s: StepId) => {
-    setStep(s);
-    if (typeof window !== "undefined") {
-      const el = document.getElementById(`section-${s}`);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    }
-  }, []);
-
+export default function LandingPage() {
   return (
-    <main>
-      <Topbar step={step} onStepChange={onStepChange} />
-      <Hero
-        intake={intake}
-        rec={rec}
-        effectiveRate={effectiveRate}
-        onStart={() => onStepChange("intake")}
-        reviewStamped={review.status !== "pending"}
-      />
-      <MobileTabs step={step} onStepChange={onStepChange} />
+    <div className="bg-canvas">
+      <SiteHeader />
+      <main>
+        <Hero />
+        <SecondaryBand />
+        <PillarStrip />
+        <Workflow />
+        <ClosingBand />
+      </main>
+      <SiteFooter />
+    </div>
+  );
+}
 
-      <div className="container-page space-y-10 py-10">
-        <div id="section-intake" className="scroll-mt-24">
-          <IntakePanel
-            intake={intake}
-            onChange={onIntakeChange}
-            onLoadScenario={onLoadScenario}
-            scenarioIndex={scenarioIndex}
-          />
-          <div className="mt-4">
-            <FlowFooter step="intake" onStepChange={onStepChange} />
+function SiteHeader() {
+  return (
+    <header className="border-b border-ink-100 bg-paper/80 backdrop-blur">
+      <div className="container-page flex items-center justify-between py-4">
+        <Link href="/">
+          <Logo />
+        </Link>
+        <nav className="hidden gap-7 text-sm text-ink-600 md:flex">
+          <Link href="/#workflow" className="hover:text-ink-900">Workflow</Link>
+          <Link href="/method" className="hover:text-ink-900">Method</Link>
+          <Link href="/#vision" className="hover:text-ink-900">Vision</Link>
+        </nav>
+        <div className="flex items-center gap-2">
+          <Link href="/method" className="hidden text-sm text-ink-600 hover:text-ink-900 md:inline">
+            How it works
+          </Link>
+          <Link href="/workspace" className="btn-primary">
+            Open workspace →
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function Hero() {
+  return (
+    <section className="relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 bg-grain opacity-60" />
+      <div className="container-page relative grid items-center gap-12 py-20 md:grid-cols-[1.15fr,0.85fr] md:py-28">
+        <div>
+          <Badge tone="moss" dot className="mb-5">
+            Live USDA + NWS · prototype build
+          </Badge>
+          <h1 className="text-balance text-[40px] leading-[1.05] tracking-tightish md:text-[64px]">
+            Prove what your soil data is worth.
+          </h1>
+          <p className="mt-5 max-w-xl text-balance text-lg leading-relaxed text-ink-600">
+            Field-specific nitrogen decisions grounded in live USDA soil data
+            and National Weather Service forecasts — reviewable by an
+            agronomist, validated by a real trial.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link href="/workspace" className="btn-primary">
+              Open field workspace
+            </Link>
+            <Link href="/method" className="btn-ghost">
+              How the engine works
+            </Link>
           </div>
+          <dl className="mt-12 grid max-w-md grid-cols-3 gap-6 border-t border-ink-100 pt-6 text-[13px]">
+            <Metric kpi="USDA" sub="SSURGO soil profile" />
+            <Metric kpi="NWS" sub="Forecast / loss risk" />
+            <Metric kpi="MRTN" sub="Economic baseline" />
+          </dl>
         </div>
 
-        <div id="section-recommendation" className="scroll-mt-24">
-          <RecommendationPanel
-            intake={intake}
-            rec={rec}
-            effectiveRate={effectiveRate}
-            reviewerAdjusted={
-              review.status === "approved_with_note" ||
-              review.status === "needs_revision"
-            }
-          />
-          <div className="mt-4">
-            <FlowFooter step="recommendation" onStepChange={onStepChange} />
+        <HeroCard />
+      </div>
+    </section>
+  );
+}
+
+function Metric({ kpi, sub }: { kpi: string; sub: string }) {
+  return (
+    <div>
+      <div className="font-display text-2xl text-ink-900">{kpi}</div>
+      <div className="text-ink-500">{sub}</div>
+    </div>
+  );
+}
+
+function HeroCard() {
+  return (
+    <div className="relative">
+      <div className="absolute -left-8 -top-8 h-40 w-40 rounded-full bg-moss-100 blur-3xl" />
+      <div className="absolute -right-12 bottom-0 h-48 w-48 rounded-full bg-loam-100 blur-3xl" />
+      <div className="relative overflow-hidden rounded-2xl border border-ink-100 bg-paper shadow-lift">
+        <div className="flex items-center justify-between border-b border-ink-100 px-5 py-3">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-rose2-400" />
+            <span className="h-2 w-2 rounded-full bg-amber2-400" />
+            <span className="h-2 w-2 rounded-full bg-moss-400" />
+          </div>
+          <div className="text-[11px] uppercase tracking-[0.14em] text-ink-400">
+            Recommendation · North Bend
           </div>
         </div>
-
-        <div id="section-evidence" className="scroll-mt-24">
-          <PeerEvidencePanel intake={intake} rec={rec} cohort={cohort} />
-          <div className="mt-4">
-            <FlowFooter step="evidence" onStepChange={onStepChange} />
+        <div className="grid grid-cols-2 gap-6 p-6">
+          <div>
+            <div className="label">Current plan</div>
+            <div className="font-display text-4xl text-ink-900">200<span className="text-base text-ink-400 ml-1">lb/ac</span></div>
+            <div className="mt-1 text-[12px] text-ink-500">Farmer baseline</div>
+          </div>
+          <div>
+            <div className="label">SoilProve</div>
+            <div className="font-display text-4xl text-moss-700">
+              176<span className="text-base text-ink-400 ml-1">lb/ac</span>
+            </div>
+            <div className="mt-1 text-[12px] text-moss-700 font-semibold">
+              −24 lb/ac · $1,964 saved
+            </div>
           </div>
         </div>
-
-        <div id="section-review" className="scroll-mt-24">
-          <AgronomistPanel
-            rec={rec}
-            review={review}
-            onChange={onReviewChange}
-            onApprove={onApprove}
-            onApproveWithAdjustment={onApproveWithAdjustment}
-            onRequestRevision={onRequestRevision}
-          />
-          <div className="mt-4">
-            <FlowFooter step="review" onStepChange={onStepChange} />
-          </div>
+        <div className="border-t border-ink-100 px-6 py-4">
+          <div className="label mb-2">Drivers</div>
+          <DriverBar label="Soybean rotation credit" delta={0} color="bg-ink-200" />
+          <DriverBar label="Silt loam · moderately drained" delta={-6} color="bg-moss-300" />
+          <DriverBar label="Forecast: 70% rain next 72h" delta={+10} color="bg-sky2-300" />
+          <DriverBar label="Organic matter 3.4%" delta={-8} color="bg-loam-300" />
+          <DriverBar label="N : corn ratio 0.14" delta={0} color="bg-ink-200" />
         </div>
-
-        <div id="section-trial" className="scroll-mt-24">
-          <TrialPlannerPanel
-            intake={intake}
-            rec={rec}
-            trial={trial}
-            effectiveRate={effectiveRate}
-            onChange={onTrialChange}
-            onDownloadCsv={onDownloadCsv}
-          />
-          <div className="mt-4">
-            <FlowFooter step="trial" onStepChange={onStepChange} />
-          </div>
-        </div>
-
-        <div id="section-outcome" className="scroll-mt-24">
-          <OutcomePanel
-            intake={intake}
-            rec={rec}
-            trial={trial}
-            outcome={outcome}
-            onChange={onOutcomeChange}
-            onReset={onOutcomeReset}
-          />
-          <div className="mt-4">
-            <FlowFooter step="outcome" onStepChange={onStepChange} />
+        <div className="flex items-center justify-between border-t border-ink-100 px-6 py-4 text-[12px]">
+          <span className="text-ink-500">Confidence</span>
+          <div className="flex items-center gap-2">
+            <span className="h-1.5 w-24 overflow-hidden rounded-full bg-ink-100">
+              <span className="block h-1.5 w-[78%] rounded-full bg-moss-500" />
+            </span>
+            <span className="font-semibold text-moss-700">High · 0.78</span>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
 
-      <HonestyFooter />
+function DriverBar({ label, delta, color }: { label: string; delta: number; color: string }) {
+  const isPos = delta > 0;
+  const isNeg = delta < 0;
+  return (
+    <div className="grid grid-cols-[1fr,auto] items-center gap-2 py-1.5">
+      <div className="flex items-center gap-3 text-[12px] text-ink-700">
+        <span className={`h-1.5 w-10 rounded-full ${color}`} />
+        <span className="truncate">{label}</span>
+      </div>
+      <span
+        className={`text-[12px] font-semibold tabular-nums ${
+          isPos ? "text-clay-600" : isNeg ? "text-moss-700" : "text-ink-400"
+        }`}
+      >
+        {delta > 0 ? "+" : delta < 0 ? "−" : ""}{Math.abs(delta)} lb
+      </span>
+    </div>
+  );
+}
 
-      <footer className="border-t border-slate-100 bg-white">
-        <div className="container-page flex flex-wrap items-center justify-between gap-3 py-6 text-xs text-slate-500">
-          <span>
-            SoilProve · Vibeathon prototype. Built to demo the
-            decision-confidence thesis, not for production agronomy.
-          </span>
-          <span>
-            Tagline:{" "}
-            <span className="font-semibold text-slate-700">
-              Prove what your soil data is worth.
-            </span>
-          </span>
+function SecondaryBand() {
+  return (
+    <section className="border-y border-ink-100 bg-paper">
+      <div className="container-page grid gap-8 py-12 md:grid-cols-3">
+        <Pillar
+          n="01"
+          title="A defensible number"
+          body="Recommendations are explainable, not opaque — every lb of N is tied to a soil, weather, agronomic, or economic driver."
+        />
+        <Pillar
+          n="02"
+          title="Live field intelligence"
+          body="USDA SSURGO and the National Weather Service are queried against your exact coordinates — not assumed from a region."
+        />
+        <Pillar
+          n="03"
+          title="Built around the agronomist"
+          body="An agronomist reviews, adjusts, and signs off. A safe trial proves it on one strip before any scale-up."
+        />
+      </div>
+    </section>
+  );
+}
+
+function Pillar({ n, title, body }: { n: string; title: string; body: string }) {
+  return (
+    <div>
+      <div className="font-display text-2xl text-loam-500">{n}</div>
+      <h3 className="mt-1">{title}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-ink-600">{body}</p>
+    </div>
+  );
+}
+
+function PillarStrip() {
+  return (
+    <section id="workflow" className="container-page py-20">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <Badge tone="loam">Workflow</Badge>
+          <h2 className="mt-3 text-balance text-3xl md:text-4xl">
+            From a coordinate to a season-end ROI.
+          </h2>
         </div>
-      </footer>
-    </main>
+        <p className="max-w-md text-sm text-ink-600">
+          Six routed pages, one persistent field state. Live data flows from the
+          first page into the recommendation, into the review, into the trial.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function Workflow() {
+  const items = [
+    { n: "01", title: "Field Setup", body: "Identify location, acreage, and economics. Persisted across pages." },
+    { n: "02", title: "Field Intelligence", body: "Pull live USDA soil profile and NWS weather for the exact coordinate." },
+    { n: "03", title: "Recommendation", body: "Decision console with drivers, economics, confidence and risk." },
+    { n: "04", title: "Agronomist Review", body: "Approve, adjust, or request revision — with rationale." },
+    { n: "05", title: "Trial Planner", body: "Define a low-risk trial strip vs control. Export the plan." },
+    { n: "06", title: "Outcome", body: "Enter harvest results — get a validated / inconclusive verdict." },
+  ];
+  return (
+    <section className="container-page pb-20">
+      <div className="grid gap-4 md:grid-cols-3">
+        {items.map((it) => (
+          <div key={it.n} className="surface panel-pad transition hover:shadow-lift">
+            <div className="flex items-baseline justify-between">
+              <span className="font-display text-2xl text-loam-500">{it.n}</span>
+              <span className="micro">Step</span>
+            </div>
+            <h3 className="mt-3">{it.title}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-ink-600">{it.body}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ClosingBand() {
+  return (
+    <section id="vision" className="border-t border-ink-100 bg-ink-900 text-paper">
+      <div className="container-page grid items-center gap-10 py-16 md:grid-cols-[1.4fr,1fr]">
+        <div>
+          <Badge tone="ink" className="bg-ink-800 text-paper ring-ink-700">
+            Why this exists
+          </Badge>
+          <h2 className="mt-3 text-balance text-3xl text-paper md:text-4xl">
+            Farmers fear yield loss more than they value paper savings. SoilProve closes that gap.
+          </h2>
+          <p className="mt-3 max-w-xl text-balance text-ink-200">
+            The engine is honest about what is live, what is modeled, and what
+            needs a real trial. The architecture is ready to swap in a trained
+            yield-response model when the data is in place.
+          </p>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <Link href="/workspace" className="btn-soft bg-paper text-ink-900 hover:bg-ink-100">
+              Try the workspace
+            </Link>
+            <Link href="/method" className="btn-ghost border-ink-700 bg-transparent text-paper hover:bg-ink-800">
+              Read the method
+            </Link>
+          </div>
+        </div>
+        <div className="rounded-2xl border border-ink-700 bg-ink-800 p-6">
+          <div className="label text-ink-300">For judges</div>
+          <ul className="mt-3 space-y-2 text-sm text-ink-100">
+            <li>· Route-based product · 8 pages</li>
+            <li>· Live USDA NRCS SSURGO integration</li>
+            <li>· Live National Weather Service forecast</li>
+            <li>· Soil + weather feed the recommendation</li>
+            <li>· ML-ready feature vector</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SiteFooter() {
+  return (
+    <footer className="border-t border-ink-100 bg-canvas py-8">
+      <div className="container-page flex flex-wrap items-center justify-between gap-3 text-[12px] text-ink-500">
+        <Logo />
+        <span>Prove what your soil data is worth · Cape Girardeau Vibeathon</span>
+      </div>
+    </footer>
   );
 }

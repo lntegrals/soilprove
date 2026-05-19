@@ -1,155 +1,166 @@
-# SoilProve — Vibeathon prototype
+# SoilProve
 
-> Prove what your soil data is worth.
+**Field-specific nitrogen decisions, grounded in live field intelligence.**
 
-SoilProve is a nitrogen **decision-confidence** product for corn farmers and the agronomists who advise them. This repo is a polished hackathon prototype built for the Cape Girardeau Vibeathon SoilProve challenge.
+SoilProve is a multi-page precision-agriculture workspace that translates a
+single field coordinate into a defensible nitrogen recommendation — reviewable
+by an agronomist and validated by a real on-farm trial.
 
-It is intentionally *not* a fertilizer calculator. The product story it demonstrates is:
-
-> *"Lowering or adjusting nitrogen does not feel like reckless guesswork. I understand the logic, my agronomist can validate it, and I can trial it safely."*
-
----
-
-## What this prototype is
-
-A single-page Next.js + TypeScript + Tailwind app that implements the full SoilProve **sacred demo flow** end-to-end:
-
-1. **Field intake** — a farmer picks one of three seeded scenarios or edits inputs (field, county, acres, previous crop, current N rate, corn/N prices, residual N, weather, soil type).
-2. **Recommendation comparison** — the current flat plan vs a deterministic, MRTN-style recommendation. Includes a per-factor "Why this recommendation changed" panel so nothing is a black box.
-3. **Peer evidence** — a clearly **modeled** cohort summary with similar-scenario count, average reduction, modeled margin effect, yield range, and a confidence badge.
-4. **Agronomist review** — a stamped review state with reviewer credentials, rationale, approve / approve-with-adjusted-rate / request-revision actions. The reviewer-approved rate flows downstream.
-5. **Safe trial planner** — pick one comfortable subsection, side-by-side trial-strip vs control-strip, success metrics, and a CSV export of the signed trial plan.
-6. **Outcome & ROI dashboard** — type harvest numbers (or use seeded post-season values) and see fertilizer savings, yield delta, net margin impact, and a Validated / Inconclusive / Needs review verdict.
-
-The demo loop closes: **recommendation → validation → trial → result.**
+This repository is the Cape Girardeau Vibeathon prototype build.
 
 ---
 
-## Run it locally
+## Why this exists
 
-Requires Node 18+ and npm.
+The deeper agronomy problem isn't fertilizer waste. It's that **farmers fear
+yield loss more than they value paper savings**. SoilProve closes that gap by
+making every nitrogen recommendation:
+
+1. **Defensible** — every lb is tied to an explicit soil, weather, agronomic, or economic driver.
+2. **Live-data-grounded** — pulled directly from USDA NRCS soil maps and the National Weather Service for the exact field coordinate.
+3. **Agronomist-owned** — there is a real review surface where a CCA can approve, adjust, or send back the recommendation.
+4. **Trial-ready** — a low-risk strip trial generates the proof before the recommendation scales.
+5. **Validated by outcome** — harvest results feed a margin / yield / fertilizer verdict.
+
+---
+
+## What is live
+
+| Layer       | Source                                                                                  | What we use                                         |
+| ----------- | --------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Soil        | USDA NRCS Soil Data Access — **SSURGO**                                                | Dominant map unit / component, texture, drainage class, hydrologic group, organic matter (depth-weighted 0–30 cm), available water storage, ksat, taxonomy |
+| Weather     | National Weather Service — **api.weather.gov**                                          | Grid resolution, 7-day forecast, precipitation probabilities, temperature, near-term rain risk |
+| Geocoding   | US Census Geocoding Services (oneline address)                                          | Optional free-text → lat/lon convenience            |
+
+Soil and weather both flow into the recommendation engine — they are not
+decorative. The recommendation visibly responds to soil texture, drainage,
+organic matter, and forecast precipitation.
+
+The recommendation engine, confidence scoring, and explanation layer are
+deterministic rule-based heuristics in this build — there is no trained ML
+model yet. The architecture is built so a trained model can drop in cleanly
+(see `ARCHITECTURE.md`).
+
+---
+
+## Workflow
+
+Eight routed pages, one persistent field state:
+
+1. **`/`** — Premium landing. Sets the product thesis and routes the user into the workspace.
+2. **`/workspace`** — Workspace dashboard. Active fields, projected savings, freshness of live data, review status.
+3. **`/workspace/field/[id]/setup`** — Field identity, location (lat/lon + optional geocode), acreage, economics, residual N, previous crop.
+4. **`/workspace/field/[id]/intelligence`** — Live USDA soil profile + live NWS forecast. Risk bars for leaching, denitrification, weather loss.
+5. **`/workspace/field/[id]/recommendation`** — Decision console. Reference rate, driver waterfall, confidence, economics, feature snapshot.
+6. **`/workspace/field/[id]/review`** — Agronomist review. Approve, approve with adjusted rate, or request revision. Rationale persisted.
+7. **`/workspace/field/[id]/trial`** — Low-risk strip trial planner. Strip preview, trial vs control rates, success metrics, CSV export.
+8. **`/workspace/field/[id]/outcome`** — Harvest entry. Yield comparison chart. Validated / inconclusive / needs-more-data verdict. Next-year action.
+9. **`/method`** — Concise method, data sources, model interface, and honesty rail.
+
+State persists in `localStorage` (`soilprove.workspace.v1`) so edits survive
+refresh and you can move freely between pages.
+
+---
+
+## Recommendation engine
+
+The engine is a **transparent additive heuristic** over a typed feature vector:
+
+```
+baseline      = regional MRTN reference for the field's state
++ previous crop delta              (agronomy)
++ residual N delta                 (agronomy)
++ organic matter mineralization    (soil)     ← live SSURGO
++ leaching / denit soil delta      (soil)     ← live SSURGO
++ weather-loss-risk delta          (weather)  ← live NWS
++ N-to-corn price ratio delta      (economics)
+————————————————————————————————————————————
+= SoilProve recommended rate
+```
+
+The model exposes a `RecommendationModel` interface (`name`, `version`,
+`modelClass`, `recommend(features, inputs)`) so a trained predictor can replace
+the heuristic without touching feature extraction or the UI.
+
+A `DecisionFeatures` type vector — defined once in `src/lib/types.ts` and
+produced by `extractFeatures()` — is the contract every downstream module
+consumes. That is the ML interface point.
+
+Confidence is a 0..1 score with penalties for: rate far from the regional
+reference, elevated weather loss risk, leachy soil profile, and small field
+size. Risk flags are surfaced explicitly on the recommendation page.
+
+---
+
+## Running locally
 
 ```bash
 npm install
-npm run dev        # http://localhost:3000
-npm run build      # production build
-npm run lint       # ESLint, configured via next/core-web-vitals
+npm run dev
 ```
 
-The build is fully static — no backend, no database, no auth. State lives in the page so that judges can play with every input and watch numbers update in real time.
+The app boots at `http://localhost:3000` (or whatever port Next picks). Live
+USDA and NWS calls happen server-side from Next API routes; no API keys are
+required. The first soil + weather fetch warms the in-browser cache.
 
----
+Build & lint:
 
-## Recommendation model — assumptions
-
-The recommendation engine in `src/lib/recommend.ts` is a **deterministic, rules-based demo model inspired by the MRTN methodology**. It is not a production agronomic engine.
-
-Starting from a regional reference rate of **165 lb N / ac** (corn-after-soybeans), it applies transparent additive adjustments:
-
-| Factor | Range of adjustment |
-| --- | --- |
-| Previous crop (soybeans / corn / small grain / alfalfa) | −30 to +35 lb N / ac |
-| Residual soil N indicator (low / typical / elevated) | −22 to +12 lb N / ac |
-| Seasonal scenario (normal / wet / dry / cool-late) | −8 to +14 lb N / ac |
-| N-to-corn price ratio | −8 to +6 lb N / ac (only shown when material) |
-
-Final rate is clamped to 100–260 lb N / ac. Modeled yield is a simple parabola around the recommended rate, plus small offsets for rotation and weather. Confidence is rule-based on whether inputs match the regional reference scenario, field size, and how far the recommendation has moved from MRTN.
-
-Every adjustment is surfaced in the **"Why this recommendation differs"** panel. The number is never delivered without the math.
-
----
-
-## What's real vs simulated
-
-We do not dress synthetic numbers up as real customer outcomes — that would undercut SoilProve's trust thesis.
-
-**Real in this build**
-- The recommendation engine with visible, editable per-factor adjustments
-- The agronomist review state machine (approve / adjust / request revision) and its downstream effect on the trial planner and outcome verdict
-- The trial planner with CSV export
-- The outcome verdict logic against the trial
-- Brand voice, copy, visual identity, and product framing
-
-**Modeled / demo only**
-- The peer cohort panel — labeled "modeled" everywhere. Scenario counts, average reductions, modeled margin effect, and yield range are computed from the recommendation, not from real farmers.
-- The illustrative cohort labels (Mark · Story County; Caspian · Boone County) come from the SoilProve elevator-pitch materials in `source_docs/` and are presented as **modeled peer** examples, not real users.
-- Residual N indicator, seasonal scenario, and county / soil type are inputs the farmer picks for the demo — they aren't pulled from soil tests or weather APIs.
-- The post-season yield numbers are seeded so the outcome dashboard has something to show. Edit them and the verdict updates.
-
-A dedicated **"What's real vs simulated"** section is rendered at the bottom of the app for judges and farmers alike.
-
----
-
-## Demo script (≈ 4 minutes)
-
-A judge or hackathon viewer should be able to follow this without prep.
-
-**1. Open the app (~10s).** Land on the hero. Read the headline: *"Nitrogen decisions farmers understand, agronomists review, and outcomes validate."* Note the live snapshot card showing the current rate, SoilProve rate, and modeled savings for the seeded `North 80 — Holcomb` field. Mention the tagline: *Prove what your soil data is worth.*
-
-**2. Field intake (~30s).** Click between the three seeded scenarios in the top right (`North 80 — Holcomb`, `South Pivot — Linn 12`, `River Bottoms — Champaign 4`). Each loads a different rotation, residual N, and weather. Edit the corn price or nitrogen price live — the downstream numbers update instantly.
-
-**3. Recommendation (~45s).** Show the three plan cards (Current / SoilProve / Agronomist-adjusted), the per-acre and total savings, and the modeled yield range. Then walk the **"Why this recommendation differs"** ladder on the right: MRTN reference → soybean credit → residual N → weather → price ratio → result. Emphasize: *no number without the math.*
-
-**4. Peer evidence (~30s).** Show the modeled cohort numbers and the confidence badge. Point at the labeled "Modeled — demo data" pill. Show the two modeled peer narratives (Mark, Caspian) and explicitly call out: *these are illustrative, not real users.*
-
-**5. Agronomist review (~45s).** Drag the "Conservative adjustment" slider up a notch. Click **Approve with adjusted rate**. Watch the stamp appear, the downstream `effectiveRate` change, and the trial planner pick it up automatically.
-
-**6. Trial planner (~30s).** Show the trial-strip slider, the per-rate spend, the modeled fertilizer savings card. Click **Download trial plan (CSV)** so a judge sees a real CSV land in their downloads folder.
-
-**7. Outcome & ROI (~45s).** Show the verdict ("Validated" / "Inconclusive" / "Needs review") based on the seeded yield numbers. Drop the trial yield by 5 bu — verdict flips to *Needs review*. Bump it back up — verdict goes green. Read the "what this means next year" guidance.
-
-**8. Close (~15s).** Scroll to *What's real vs simulated*. Call out that the prototype is honest about its limits. End on the tagline.
-
----
-
-## File map
-
-```
-src/
-├── app/
-│   ├── layout.tsx           # Fonts (Inter + Poppins via next/font) and metadata
-│   ├── page.tsx             # Single-page orchestrator with state & demo flow
-│   └── globals.css          # Tailwind base + brand utility classes
-├── components/
-│   ├── Topbar.tsx           # Sticky nav with step navigation
-│   ├── Hero.tsx             # Landing hero + live snapshot card
-│   ├── IntakePanel.tsx      # Field intake form + scenario chips
-│   ├── RecommendationPanel.tsx
-│   ├── PeerEvidencePanel.tsx
-│   ├── AgronomistPanel.tsx
-│   ├── TrialPlannerPanel.tsx
-│   ├── OutcomePanel.tsx
-│   ├── FlowFooter.tsx       # Per-section back / continue navigation
-│   ├── HonestyFooter.tsx    # What's real vs simulated
-│   ├── Badge.tsx            # Pills + demo-data label
-│   ├── Stat.tsx             # Reusable stat block
-│   └── Logo.tsx
-└── lib/
-    ├── recommend.ts         # Deterministic recommendation engine + cohort + trial + outcome
-    ├── demo-data.ts         # Seeded fields, option lists
-    ├── format.ts            # Number / currency / bu formatters
-    └── types.ts             # Shared types
+```bash
+npm run build   # production build
+npm run lint    # next lint — no warnings or errors
 ```
 
----
-
-## What we deliberately did not build
-
-To respect the brief and keep the demo crisp, this build does not include:
-
-- Authentication, user accounts, or payment flows
-- Onboarding wizards or multi-step forms beyond the demo intake
-- A general farm-management suite
-- Real John Deere / Climate FieldView / OEM integrations
-- Real agronomic API integrations or weather pulls
-- A chat assistant as the primary interface
-- Anything outside the sacred demo flow
-
-The goal of this repo is a **finished vertical slice** that makes the SoilProve thesis tangible in five minutes.
+No environment variables are required for any live data source. See
+`.env.example` for an optional contact-email header you can set if you're
+running NWS at higher volumes.
 
 ---
 
-## Credits
+## Demo (5 minutes)
 
-- Product thesis, brand voice, and copy direction: SoilProve overview, branding guide, and elevator pitch in `source_docs/` (Cape Girardeau Vibeathon materials)
-- Recommendation methodology framing: Midwest Nitrogen Rate Trial (MRTN) — used here as a reference frame for a deterministic demo model, not as a production calculator
+The end-to-end demo script lives in `DEMO_SCRIPT.md`. Quick path:
+
+1. Hit `/` and click **Open workspace**.
+2. Open the flagship field, jump to **Field Intelligence** — point at the live USDA map unit and the 7-day NWS forecast.
+3. Move to **Recommendation** — show the driver waterfall and the confidence score moving with soil + weather inputs.
+4. Open **Agronomist Review** — approve with an adjusted rate.
+5. **Trial Planner** — show the strip preview and CSV export.
+6. **Outcome** — drag a yield input to flip the verdict from inconclusive → validated.
+
+---
+
+## Deployment notes
+
+This is a stock Next.js 14 App Router app with no server-side runtime
+dependencies beyond Node 18+. It deploys cleanly to Vercel, Fly, Render, or
+any Node host. The three live integrations (USDA SDA, NWS, Census Geocoder)
+are all public and unauthenticated, so a deploy needs no secrets.
+
+For higher production traffic against NWS, set
+`NWS_USER_AGENT="YourApp (contact@example.com)"` and pipe it through
+`src/lib/integrations/nws.ts`. NWS asks every consumer to identify themselves.
+
+---
+
+## Architecture
+
+See `ARCHITECTURE.md` for the route map, data flow, engine modules, and ML
+extension path. The architecture is intentionally **ML-ready**: the next pass
+can plug a trained yield-response model into the existing recommendation
+interface without touching the UI.
+
+---
+
+## What is *not* real yet (honesty rail)
+
+- No trained ML model in this build — the engine is rules-based.
+- No bundled farmer outcome data. The outcome page works on the user's own trial input.
+- No real retailer / OEM integrations.
+- Regional MRTN reference rates are conservative state-level averages, not field-specific calibrations.
+- When USDA SDA or NWS is unreachable, the app falls back to a clearly-labelled regional estimate (the badge changes from "Live USDA" to "Fallback").
+
+---
+
+## License
+
+Prototype build — not for production agronomy.
