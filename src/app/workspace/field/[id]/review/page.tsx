@@ -65,13 +65,13 @@ export default function ReviewPage() {
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[1.3fr,1fr]">
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.3fr),minmax(0,1fr)]">
       <div className="space-y-6">
         <Panel
           title="Recommendation under review"
           right={<Badge tone={statusTone(review.status)} dot>{statusLabel(review.status)}</Badge>}
         >
-          <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="grid grid-cols-3 gap-3 text-center sm:gap-4">
             <RateTile label="Farmer plan" value={rec.baselineRate} sub="baseline" />
             <RateTile
               label="SoilProve"
@@ -221,13 +221,13 @@ function RateTile({
   const valueColor =
     tone === "amber" ? "text-amber2-500" : tone === "moss" ? "text-moss-700" : "text-ink-900";
   return (
-    <div className={`rounded-2xl bg-canvas px-4 py-5 ${ring}`}>
+    <div className={`rounded-2xl bg-canvas px-3 py-5 sm:px-4 ${ring}`}>
       <div className="micro text-ink-500">{label}</div>
-      <div className={`mt-1 font-display text-3xl tabular-nums ${valueColor}`}>
+      <div className={`mt-1.5 font-display text-3xl leading-none tabular-nums ${valueColor}`}>
         {Math.round(value)}
-        <span className="ml-1 text-xs text-ink-400">lb/ac</span>
+        <span className="ml-1 text-xs font-normal text-ink-400">lb/ac</span>
       </div>
-      <div className="mt-1 text-[11px] text-ink-500">{sub}</div>
+      <div className="mt-2 text-[11px] leading-snug text-ink-500">{sub}</div>
     </div>
   );
 }
@@ -267,7 +267,7 @@ function effectiveRate(
 
 function statusLabel(s: string) {
   if (s === "approved") return "Approved";
-  if (s === "approved_with_note") return "Approved · adjusted";
+  if (s === "approved_with_note") return "Approved with adjustment";
   if (s === "needs_revision") return "Needs revision";
   return "Pending review";
 }

@@ -78,7 +78,7 @@ export default function TrialPage() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 xl:grid-cols-[1.4fr,1fr]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr),minmax(0,1fr)]">
         <Panel
           title="Trial design"
           subtitle="A safe, side-by-side comparison on this field"
@@ -149,7 +149,7 @@ export default function TrialPage() {
 
         <aside className="space-y-6">
           <Panel title="Trial economics">
-            <StatRow>
+            <StatRow cols={2}>
               <Stat
                 label="Trial spend"
                 value={fmtUSD(econ.fertilizerSpendTrial)}
@@ -164,7 +164,7 @@ export default function TrialPage() {
                 label="Expected savings"
                 value={fmtUSD(econ.fertilizerSavings)}
                 tone={econ.fertilizerSavings >= 0 ? "good" : "warn"}
-                hint={`${signedInt(trial.controlRate - trial.trialRate)} lb/ac × ${trial.trialAcres} ac`}
+                hint={`${signedInt(trial.controlRate - trial.trialRate)} lb/ac on ${trial.trialAcres} ac`}
               />
               <Stat
                 label="Acres covered"
@@ -175,11 +175,11 @@ export default function TrialPage() {
           </Panel>
 
           <Panel title="Export & sign-off">
-            <p className="text-sm text-ink-600">
+            <p className="text-sm leading-relaxed text-ink-600">
               Download a clean trial plan with agronomy basis, applied rates,
-              prices, and reviewer info — for the farm record or the retailer.
+              prices, and reviewer info for the farm record or the retailer.
             </p>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-5 flex flex-wrap gap-2">
               <button onClick={exportCsv} className="btn-primary">
                 ↓ Export trial plan (CSV)
               </button>
@@ -194,7 +194,7 @@ export default function TrialPage() {
 
           <Panel tone="dark">
             <div className="micro text-loam-300">Risk posture</div>
-            <p className="mt-2 text-sm text-ink-200">
+            <p className="mt-2.5 text-sm leading-relaxed text-ink-200">
               The trial isolates downside to a single strip. If the trial rate
               underperforms, the financial exposure is bounded to that strip’s
               yield drop, not the whole field.
@@ -283,16 +283,20 @@ function Segment({
   faded?: boolean;
 }) {
   if (width <= 0) return null;
+  const narrow = width < 14;
   return (
     <div
-      className={`flex flex-col justify-between px-3 py-2 ${color} ${textOn} ${faded ? "opacity-80" : ""}`}
-      style={{ width: `${Math.max(width, 4)}%` }}
+      className={`flex min-w-0 flex-col justify-between overflow-hidden px-3 py-2 ${color} ${textOn} ${faded ? "opacity-80" : ""}`}
+      style={{ width: `${Math.max(width, 5)}%` }}
     >
-      <div className="text-[10px] uppercase tracking-[0.12em] font-semibold">{title}</div>
-      <div className="font-display text-base leading-none">
-        {rate}<span className="text-[10px] ml-0.5">lb</span>
+      <div className="truncate text-[10px] font-semibold uppercase tracking-[0.12em]">
+        {narrow ? title.split(" ")[0] : title}
       </div>
-      <div className="text-[10px]">{Math.round(acres)} ac</div>
+      <div className="font-display text-base leading-none tabular-nums">
+        {rate}
+        <span className="ml-0.5 text-[10px] font-normal">lb</span>
+      </div>
+      <div className="text-[10px] tabular-nums">{Math.round(acres)} ac</div>
     </div>
   );
 }

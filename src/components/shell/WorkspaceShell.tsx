@@ -54,7 +54,7 @@ export function WorkspaceShell({
             <Link href="/workspace" className="block">
               <Logo />
             </Link>
-            <div className="mt-1 text-[11px] text-ink-500">
+            <div className="mt-1.5 text-[11px] text-ink-500">
               Field intelligence workspace
             </div>
           </div>
@@ -77,22 +77,23 @@ export function WorkspaceShell({
               ))}
             </select>
             {field && (
-              <div className="mt-2 text-[11px] text-ink-500">
-                {field.inputs.location.label ?? "—"} ·{" "}
+              <div className="mt-2.5 text-[11px] leading-relaxed text-ink-500">
+                {field.inputs.location.label ?? "—"}
+                <span className="mx-1.5 text-ink-300">·</span>
                 {field.inputs.acres.toLocaleString()} ac
               </div>
             )}
           </div>
 
           <nav className="flex flex-1 flex-col gap-1 px-3 py-4 hairline">
-            {STEPS.map((step, i) => {
+            {STEPS.map((step) => {
               const isActive = activeStep === step.key;
               const href = `/workspace/field/${fieldId}/${step.key}`;
               const done = isStepDone(step.key, field);
               return (
                 <Link key={step.key} href={href} className={`nav-link ${isActive ? "active" : ""}`}>
                   <span
-                    className={`flex h-6 w-6 items-center justify-center rounded-md text-[10px] font-bold ${
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[10px] font-bold ${
                       isActive
                         ? "bg-paper text-ink-900"
                         : done
@@ -102,10 +103,10 @@ export function WorkspaceShell({
                   >
                     {done ? "✓" : step.num}
                   </span>
-                  <span className="flex flex-col">
+                  <span className="flex min-w-0 flex-col">
                     <span className="leading-tight">{step.label}</span>
                     <span
-                      className={`text-[10px] uppercase tracking-[0.1em] ${
+                      className={`mt-0.5 text-[10px] uppercase tracking-[0.1em] ${
                         isActive ? "text-paper/70" : "text-ink-400"
                       }`}
                     >
@@ -117,16 +118,13 @@ export function WorkspaceShell({
             })}
           </nav>
 
-          <div className="mt-auto px-5 py-4">
+          <div className="mt-auto px-5 py-5">
             <Link
               href="/method"
               className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-500 hover:text-ink-900"
             >
               Method &amp; data sources →
             </Link>
-            <div className="mt-2 text-[10px] text-ink-400">
-              Prototype build · v0.2
-            </div>
           </div>
         </aside>
 
@@ -158,7 +156,7 @@ function FieldHeader({
   const reviewStatus = field.review?.status ?? "pending";
   return (
     <header className="sticky top-0 z-20 border-b border-ink-100 bg-paper/85 backdrop-blur">
-      <div className="flex items-center justify-between gap-4 px-6 py-3.5 md:px-10">
+      <div className="flex items-center justify-between gap-6 px-6 py-4 md:px-10">
         <div className="flex min-w-0 items-center gap-4">
           <div className="md:hidden">
             <Link href="/workspace">
@@ -168,17 +166,17 @@ function FieldHeader({
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.14em] text-ink-400">
               <Link href="/workspace" className="hover:text-ink-900">Workspace</Link>
-              <span>/</span>
+              <span className="text-ink-300">/</span>
               <span className="truncate text-ink-700">{i.fieldName}</span>
             </div>
-            <h2 className="mt-0.5 truncate text-lg md:text-xl">
+            <h2 className="mt-1 truncate text-lg md:text-xl">
               {activeStep
                 ? STEPS.find((s) => s.key === activeStep)?.label
                 : i.fieldName}
             </h2>
           </div>
         </div>
-        <div className="hidden items-center gap-2 lg:flex">
+        <div className="hidden shrink-0 items-center gap-2 lg:flex">
           <Badge tone={soilFresh ? "moss" : "neutral"} dot>
             {soilFresh ? "Soil live" : "Soil pending"}
           </Badge>

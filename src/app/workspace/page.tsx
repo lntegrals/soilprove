@@ -90,7 +90,7 @@ export default function WorkspaceHome() {
         </div>
 
         {/* Field cards */}
-        <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-8 grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
           {cards.map(({ fs, rec }, idx) => (
             <FieldCard key={fs.inputs.id} fs={fs} rec={rec} flagship={idx === 0} />
           ))}
@@ -102,19 +102,23 @@ export default function WorkspaceHome() {
             className="surface panel-pad transition hover:shadow-lift"
           >
             <div className="label">Method</div>
-            <div className="mt-2 font-display text-xl">How the engine produces this number</div>
-            <p className="mt-2 text-sm text-ink-600">
-              Data sources, feature extraction, recommendation model, and how the
-              ML interface is wired for the next pass.
+            <div className="mt-2.5 font-display text-xl leading-snug">
+              How the engine produces this number
+            </div>
+            <p className="mt-2.5 text-sm leading-relaxed text-ink-600">
+              Data sources, feature extraction, recommendation model, and how
+              the ML interface is wired for the next pass.
             </p>
-            <div className="mt-3 text-sm font-semibold text-moss-700">Read method →</div>
+            <div className="mt-4 text-sm font-semibold text-moss-700">Read method →</div>
           </Link>
           <div className="surface panel-pad">
             <div className="label">Data freshness</div>
-            <div className="mt-2 font-display text-xl">Updated on each visit</div>
-            <p className="mt-2 text-sm text-ink-600">
-              Live soil and weather are fetched against the field coordinate.
-              Cached in this browser and re-fetched on the Intelligence page.
+            <div className="mt-2.5 font-display text-xl leading-snug">
+              Refreshed on each visit
+            </div>
+            <p className="mt-2.5 text-sm leading-relaxed text-ink-600">
+              Live soil and weather are fetched against the field coordinate,
+              cached locally, and re-pulled on the Intelligence page.
             </p>
           </div>
         </div>
@@ -156,24 +160,24 @@ function FieldCard({
   const trimmed = rec.baselineRate - rec.recommendedRate;
   return (
     <div className="surface flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between gap-3 border-b border-ink-100 px-5 py-3.5">
+      <div className="flex items-start justify-between gap-3 border-b border-ink-100 px-5 py-4">
         <div className="min-w-0">
           <div className="micro">{flagship ? "Flagship" : "Field"}</div>
-          <div className="truncate font-display text-lg text-ink-900">
+          <div className="mt-1 font-display text-lg leading-snug text-ink-900">
             {i.fieldName}
           </div>
         </div>
-        <Badge tone={reviewBadgeTone(reviewStatus)} dot>
+        <Badge tone={reviewBadgeTone(reviewStatus)} dot className="shrink-0">
           {reviewLabel(reviewStatus)}
         </Badge>
       </div>
-      <div className="grid grid-cols-2 gap-5 px-5 py-4">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-4 px-5 py-5">
         <Stat
           label="Recommended"
           value={
             <>
               {Math.round(rec.recommendedRate)}
-              <span className="ml-1 text-base text-ink-400">lb/ac</span>
+              <span className="ml-1 text-base font-normal text-ink-400">lb/ac</span>
             </>
           }
           hint={`vs ${rec.baselineRate} lb/ac plan`}
@@ -182,21 +186,29 @@ function FieldCard({
         <Stat
           label="Whole-field"
           value={trimmed >= 0 ? `${signedUSD(rec.totalCostDelta)}` : signedUSD(rec.totalCostDelta)}
-          hint={`${signedInt(trimmed)} lb/ac · ${fmtAcres(i.acres)}`}
+          hint={`${signedInt(trimmed)} lb/ac on ${fmtAcres(i.acres)}`}
           tone={trimmed >= 0 ? "good" : "warn"}
         />
       </div>
-      <div className="border-t border-ink-100 px-5 py-3 text-[12px] text-ink-500">
-        <div className="flex items-center justify-between">
-          <span>{i.location.label ?? `${i.location.latitude.toFixed(2)}, ${i.location.longitude.toFixed(2)}`}</span>
-          <span>{rec.confidence === "high" ? "High" : rec.confidence === "moderate" ? "Moderate" : "Low"} confidence</span>
+      <div className="border-t border-ink-100 px-5 py-4 text-[12px] text-ink-500">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+          <span className="min-w-0 truncate">
+            {i.location.label ?? `${i.location.latitude.toFixed(2)}, ${i.location.longitude.toFixed(2)}`}
+          </span>
+          <span className="shrink-0 font-medium text-ink-600">
+            {rec.confidence === "high" ? "High" : rec.confidence === "moderate" ? "Moderate" : "Low"} confidence
+          </span>
         </div>
-        <div className="mt-1 flex items-center gap-2">
-          <Badge tone={fs.soil ? "moss" : "neutral"} dot>{fs.soil ? "Soil" : "No soil yet"}</Badge>
-          <Badge tone={fs.weather ? "sky" : "neutral"} dot>{fs.weather ? "Weather" : "No weather yet"}</Badge>
+        <div className="mt-2.5 flex flex-wrap items-center gap-2">
+          <Badge tone={fs.soil ? "moss" : "neutral"} dot>
+            {fs.soil ? "Soil live" : "Soil pending"}
+          </Badge>
+          <Badge tone={fs.weather ? "sky" : "neutral"} dot>
+            {fs.weather ? "Weather live" : "Weather pending"}
+          </Badge>
         </div>
       </div>
-      <div className="mt-auto flex items-center justify-between border-t border-ink-100 px-5 py-3">
+      <div className="mt-auto flex items-center justify-between gap-3 border-t border-ink-100 px-5 py-3.5">
         <Link
           href={`/workspace/field/${id}/recommendation`}
           className="text-[13px] font-semibold text-moss-700 hover:text-moss-800"

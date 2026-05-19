@@ -66,7 +66,7 @@ export default function SetupPage() {
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[1.4fr,1fr]">
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr),minmax(0,1fr)]">
       <div className="space-y-6">
         <Panel
           title="Field identity"
@@ -110,7 +110,7 @@ export default function SetupPage() {
             </Badge>
           }
         >
-          <div className="grid gap-4 md:grid-cols-[1.4fr,1fr]">
+          <div className="grid gap-4 md:grid-cols-[minmax(0,1.4fr),minmax(0,1fr)]">
             <div className="grid gap-3 md:grid-cols-2">
               <Field label="Latitude">
                 <NumberField
@@ -155,7 +155,7 @@ export default function SetupPage() {
                   ))}
                 </select>
               </Field>
-              <Field label="Free-text lookup" span={2} hint="Optional — uses the US Census geocoder">
+              <Field label="Free-text lookup" span={2} hint="Optional, uses the US Census geocoder">
                 <div className="flex gap-2">
                   <input
                     className="field-input flex-1"
@@ -179,15 +179,18 @@ export default function SetupPage() {
                   </button>
                 </div>
                 {geo.err && (
-                  <span className="mt-1 text-[11px] text-rose2-500">{geo.err}</span>
+                  <span className="mt-1.5 text-[11px] text-rose2-500">{geo.err}</span>
                 )}
               </Field>
             </div>
             <div className="flex flex-col gap-3">
               <MiniMap lat={i.location.latitude} lon={i.location.longitude} zoom={12} size={3} />
-              <div className="text-[11px] text-ink-500">
-                {i.location.label ?? "—"} ·{" "}
-                {i.location.latitude.toFixed(4)}, {i.location.longitude.toFixed(4)}
+              <div className="text-[11px] leading-relaxed text-ink-500">
+                <span>{i.location.label ?? "—"}</span>
+                <span className="mx-1.5 text-ink-300">·</span>
+                <span className="font-mono text-ink-600">
+                  {i.location.latitude.toFixed(4)}, {i.location.longitude.toFixed(4)}
+                </span>
               </div>
             </div>
           </div>

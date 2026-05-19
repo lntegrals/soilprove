@@ -54,10 +54,10 @@ body {
     @apply border-b border-ink-100;
   }
   .label {
-    @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-500;
+    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-500;
   }
   .micro {
-    @apply text-[11px] uppercase tracking-[0.14em] font-semibold text-ink-400;
+    @apply text-[11px] uppercase tracking-[0.16em] font-semibold text-ink-400;
   }
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-moss-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
@@ -81,19 +81,19 @@ body {
     @apply chip border border-ink-200 bg-paper text-ink-700;
   }
   .field-label {
-    @apply mb-1.5 block text-xs font-semibold uppercase tracking-[0.1em] text-ink-500;
+    @apply mb-2 block text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-500;
   }
   .field-input {
     @apply w-full rounded-lg border border-ink-200 bg-paper px-3 py-2 text-sm text-ink-800 shadow-sm transition focus:border-moss-400 focus:outline-none focus:ring-2 focus:ring-moss-100;
   }
   .stat-num {
-    @apply font-display text-3xl font-semibold text-ink-900 tracking-tightish;
+    @apply font-display text-[28px] md:text-3xl font-semibold text-ink-900 tracking-tightish;
   }
   .stat-label {
     @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-400;
   }
   .nav-link {
-    @apply flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-ink-600 hover:bg-ink-50 hover:text-ink-900 transition;
+    @apply flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-ink-600 hover:bg-ink-50 hover:text-ink-900 transition;
   }
   .nav-link.active {
     @apply bg-ink-900 text-paper hover:bg-ink-900 hover:text-paper;

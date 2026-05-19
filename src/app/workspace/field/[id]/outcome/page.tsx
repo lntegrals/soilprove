@@ -120,7 +120,7 @@ export default function OutcomePage() {
         </div>
       </Panel>
 
-      <div className="grid gap-6 xl:grid-cols-[1.2fr,1fr]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr),minmax(0,1fr)]">
         <Panel
           title="Harvest results"
           subtitle="Enter measured yields and applied rates"
@@ -183,11 +183,11 @@ export default function OutcomePage() {
 
         <aside className="space-y-6">
           <Panel title="Result summary">
-            <StatRow>
+            <StatRow cols={2}>
               <Stat
                 label="Yield delta"
                 value={`${summary.yieldDelta > 0 ? "+" : ""}${summary.yieldDelta.toFixed(1)}`}
-                hint="bu/ac (trial − control)"
+                hint="bu/ac, trial vs control"
                 tone={summary.yieldDelta >= -1 ? "good" : "warn"}
               />
               <Stat
@@ -239,25 +239,25 @@ function YieldChart({
 
   return (
     <div>
-      <div className="label mb-2">Yield comparison</div>
-      <div className="relative h-24 w-full rounded-xl bg-canvas">
+      <div className="label mb-3">Yield comparison</div>
+      <div className="relative h-28 w-full rounded-xl bg-canvas">
         {/* Expected range band */}
         <div
-          className="absolute top-1 bottom-1 rounded-md bg-moss-100"
+          className="absolute top-2 bottom-2 rounded-md bg-moss-100"
           style={{
             left: `${pct(expectedRange[0])}%`,
             width: `${pct(expectedRange[1]) - pct(expectedRange[0])}%`,
           }}
         />
-        {/* Expected mark */}
-        <Marker pct={pct(expected)} label={fmtBuAc(expected)} color="bg-ink-400" sub="modeled" />
-        {/* Control mark */}
+        {/* Control mark (top) */}
         <Marker pct={pct(controlYield)} label={fmtBuAc(controlYield)} color="bg-loam-500" sub="control" align="top" />
-        {/* Trial mark */}
+        {/* Expected mark (middle) */}
+        <Marker pct={pct(expected)} label={fmtBuAc(expected)} color="bg-ink-400" sub="modeled" />
+        {/* Trial mark (bottom) */}
         <Marker pct={pct(trialYield)} label={fmtBuAc(trialYield)} color="bg-moss-600" sub="trial" align="bottom" />
       </div>
-      <div className="mt-2 flex justify-between text-[10px] text-ink-500">
-        <span>{Math.round(min)}</span>
+      <div className="mt-2.5 flex justify-between text-[10px] tabular-nums text-ink-500">
+        <span>{Math.round(min)} bu/ac</span>
         <span>{Math.round(max)} bu/ac</span>
       </div>
     </div>
@@ -277,19 +277,26 @@ function Marker({
   sub: string;
   align?: "top" | "bottom" | "middle";
 }) {
-  const y = align === "top" ? "top-1" : align === "bottom" ? "bottom-1" : "top-1/2 -translate-y-1/2";
+  const clamped = Math.max(0, Math.min(100, pct));
+  const yClass =
+    align === "top"
+      ? "top-2"
+      : align === "bottom"
+      ? "bottom-2"
+      : "top-1/2 -translate-y-1/2";
   return (
     <div
-      className="absolute"
-      style={{ left: `${Math.max(0, Math.min(100, pct))}%`, transform: "translateX(-50%)" }}
+      className={`pointer-events-none absolute flex items-center gap-2 ${yClass}`}
+      style={{
+        left: `${clamped}%`,
+        transform: `translateX(-50%) ${align === "middle" ? "translateY(-50%)" : ""}`.trim(),
+      }}
     >
-      <div className={`flex items-center gap-2 ${y === "top-1" ? "" : y === "bottom-1" ? "absolute bottom-1" : "absolute top-1/2 -translate-y-1/2"}`}>
-        <span className={`block h-4 w-1 rounded-full ${color}`} />
-        <span className="rounded-md bg-paper px-1.5 py-0.5 text-[10px] font-semibold text-ink-800 shadow-card">
-          {label}
-          <span className="ml-1 text-ink-400">{sub}</span>
-        </span>
-      </div>
+      <span className={`block h-4 w-1 shrink-0 rounded-full ${color}`} />
+      <span className="whitespace-nowrap rounded-md bg-paper px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-ink-800 shadow-card">
+        {label}
+        <span className="ml-1 font-normal text-ink-400">{sub}</span>
+      </span>
     </div>
   );
 }
@@ -320,10 +327,10 @@ function nextYearText(
   fertSavings: number
 ): string {
   if (v === "validated") {
-    return `Scale the trial rate to a larger share of the field next season — yield held within the noise band and fertilizer ${fertSavings >= 0 ? "saved" : "ran higher"}.`;
+    return `Scale the trial rate to a larger share of the field next season. Yield held within the noise band and fertilizer ${fertSavings >= 0 ? "saved" : "ran higher"}.`;
   }
   if (v === "needs_more_data") {
-    return `Yield dropped meaningfully on the trial strip. Revisit residual N and timing before retrying; consider a stabilizer.`;
+    return `Yield dropped meaningfully on the trial strip. Revisit residual N and timing before retrying, and consider a stabilizer.`;
   }
   return `Result is inside the modeled noise band (${yieldDelta.toFixed(1)} bu/ac). Worth a second-year trial before scaling.`;
 }

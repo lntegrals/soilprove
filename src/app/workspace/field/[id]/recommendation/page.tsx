@@ -42,36 +42,36 @@ export default function RecommendationPage() {
     <div className="space-y-6">
       {/* Decision hero */}
       <Panel tone="dark" className="overflow-hidden">
-        <div className="grid gap-8 md:grid-cols-[1.2fr,1fr]">
-          <div>
-            <div className="flex items-center gap-2">
+        <div className="grid gap-8 md:grid-cols-[1.2fr,1fr] md:gap-10">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
               <Badge tone="moss" dot>
-                Decision · {confidenceLabel(rec.confidence)} confidence
+                {confidenceLabel(rec.confidence)} confidence
               </Badge>
               <Badge tone="ink" className="bg-ink-800 ring-ink-700">
-                {recommendationModel.name} v{recommendationModel.version}
+                {recommendationModel.name}
               </Badge>
             </div>
-            <h1 className="mt-4 font-display text-[40px] leading-[1.04] text-paper md:text-[52px]">
+            <h1 className="mt-5 font-display text-[40px] leading-[1.04] text-paper md:text-[52px]">
               {rec.recommendedRate}
-              <span className="text-base font-normal text-ink-300"> lb N / ac</span>
+              <span className="ml-1.5 text-base font-normal text-ink-300">lb N / ac</span>
             </h1>
-            <p className="mt-1 text-sm text-ink-200">{rec.explainer}</p>
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-200">
+              {rec.explainer}
+            </p>
 
-            <div className="mt-7 flex flex-wrap items-center gap-6">
+            <div className="mt-8 grid grid-cols-3 items-center gap-x-3 gap-y-4 sm:gap-x-6">
               <CompareTile
                 label="Current plan"
                 value={rec.baselineRate}
                 sub="Farmer baseline"
               />
-              <Arrow />
               <CompareTile
                 label="SoilProve"
                 value={rec.recommendedRate}
                 sub={`${signedInt(-trimmed)} lb/ac vs plan`}
                 emphasis
               />
-              <Arrow />
               <CompareTile
                 label="Reference"
                 value={rec.baseMrtnRate}
@@ -80,9 +80,9 @@ export default function RecommendationPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl bg-ink-800 p-5">
+          <div className="rounded-2xl bg-ink-800 p-6">
             <div className="micro text-loam-300">Economics</div>
-            <div className="mt-2 grid grid-cols-2 gap-y-3 gap-x-6">
+            <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4">
               <NumTile
                 label="Per acre"
                 value={moneySigned(rec.perAcreCostDelta)}
@@ -102,36 +102,36 @@ export default function RecommendationPage() {
                 value={`${rec.yieldRange[0].toFixed(0)}–${rec.yieldRange[1].toFixed(0)} bu`}
               />
             </div>
-            <div className="mt-5 border-t border-ink-700 pt-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] uppercase tracking-[0.12em] text-ink-300">
+            <div className="mt-6 border-t border-ink-700 pt-4">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[11px] uppercase tracking-[0.14em] text-ink-300">
                   Confidence
                 </span>
-                <span className="text-sm font-semibold text-paper">
+                <span className="text-sm font-semibold tabular-nums text-paper">
                   {fmtPctFrac(rec.confidenceScore)}
                 </span>
               </div>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ink-700">
+              <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-ink-700">
                 <div
                   className={`h-1.5 rounded-full ${confidenceFill(rec.confidence)}`}
                   style={{ width: `${Math.round(rec.confidenceScore * 100)}%` }}
                 />
               </div>
-              <div className="mt-2 text-[11px] text-ink-300">
+              <div className="mt-2.5 text-[11px] leading-relaxed text-ink-300">
                 {rec.riskFlags.length === 0
                   ? "No notable risk flags."
-                  : rec.riskFlags.map((f) => `· ${f}`).join("  ")}
+                  : rec.riskFlags.map((f) => `· ${f}`).join("   ")}
               </div>
             </div>
           </div>
         </div>
       </Panel>
 
-      <div className="grid gap-6 xl:grid-cols-[1.4fr,1fr]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr),minmax(0,1fr)]">
         {/* Drivers */}
         <Panel
           title="What moved the recommendation"
-          subtitle={`Reference rate is ${rec.baseMrtnRate} lb/ac for ${i.location.state ?? "the region"}. Drivers add or subtract from that.`}
+          subtitle={`Reference rate is ${rec.baseMrtnRate} lb/ac for ${i.location.state ?? "the region"}. Drivers add or subtract from there.`}
         >
           <Waterfall
             base={rec.baseMrtnRate}
@@ -142,7 +142,7 @@ export default function RecommendationPage() {
 
         {/* Inputs snapshot */}
         <Panel title="Feature snapshot" subtitle="The vector fed into the model">
-          <ul className="space-y-2.5 text-sm">
+          <ul className="text-sm">
             <KV label="Acres" value={fmtAcres(i.acres)} />
             <KV label="Previous crop" value={i.previousCrop.replace("_", " ")} />
             <KV label="Residual N" value={i.residualN} />
@@ -169,7 +169,7 @@ export default function RecommendationPage() {
           </ul>
           <Link
             href="/method"
-            className="mt-4 inline-block text-[12px] font-semibold text-moss-700 hover:text-moss-800"
+            className="mt-5 inline-block text-[12px] font-semibold text-moss-700 hover:text-moss-800"
           >
             How features translate into a rate →
           </Link>
@@ -179,7 +179,7 @@ export default function RecommendationPage() {
       <Panel
         title="Take this to your agronomist"
         right={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Link
               href={`/workspace/field/${id}/intelligence`}
               className="btn-ghost"
@@ -195,10 +195,10 @@ export default function RecommendationPage() {
           </div>
         }
       >
-        <p className="text-sm text-ink-600">
-          SoilProve generates the number — your agronomist owns the decision.
-          The review surface lets them approve, adjust, or send back for revision
-          with rationale.
+        <p className="max-w-2xl text-sm leading-relaxed text-ink-600">
+          SoilProve generates the number. The agronomist owns the decision and
+          can approve, adjust, or send it back for revision with a written
+          rationale.
         </p>
       </Panel>
     </div>
@@ -217,23 +217,19 @@ function CompareTile({
   emphasis?: boolean;
 }) {
   return (
-    <div>
+    <div className="min-w-0">
       <div className="micro text-loam-300">{label}</div>
       <div
-        className={`font-display text-3xl tabular-nums ${
+        className={`mt-1.5 font-display text-3xl leading-none tabular-nums ${
           emphasis ? "text-paper" : "text-ink-100"
         }`}
       >
         {Math.round(value)}
-        <span className="ml-1 text-[11px] text-ink-300">lb</span>
+        <span className="ml-1 text-[11px] font-normal text-ink-300">lb</span>
       </div>
-      {sub && <div className="mt-0.5 text-[11px] text-ink-300">{sub}</div>}
+      {sub && <div className="mt-1.5 text-[11px] leading-snug text-ink-300">{sub}</div>}
     </div>
   );
-}
-
-function Arrow() {
-  return <span className="text-ink-500">→</span>;
 }
 
 function NumTile({
@@ -265,9 +261,9 @@ function NumTile({
 
 function KV({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <li className="flex items-center justify-between gap-3 border-b border-dashed border-ink-100 pb-1.5 text-sm">
+    <li className="flex items-center justify-between gap-3 border-b border-dashed border-ink-100 py-2.5 text-sm last:border-b-0">
       <span className="text-ink-500">{label}</span>
-      <span className="font-medium text-ink-800 tabular-nums">{value}</span>
+      <span className="text-right font-medium tabular-nums text-ink-800">{value}</span>
     </li>
   );
 }
@@ -406,14 +402,14 @@ function Row({
       ? "amber"
       : "neutral";
   return (
-    <div className="grid grid-cols-[200px,1fr,80px] items-center gap-3">
+    <div className="grid grid-cols-[minmax(0,180px),1fr,72px] items-center gap-x-4">
       <div className="min-w-0">
-        <div className={`truncate text-[13px] ${emphasis ? "font-semibold text-ink-900" : "text-ink-700"}`}>{label}</div>
+        <div className={`truncate text-[13px] leading-snug ${emphasis ? "font-semibold text-ink-900" : "text-ink-700"}`}>{label}</div>
         {sub && (
-          <div className="truncate text-[11px] text-ink-500" title={sub}>{sub}</div>
+          <div className="mt-0.5 truncate text-[11px] text-ink-500" title={sub}>{sub}</div>
         )}
         {!sub && (
-          <Badge tone={catTone as "loam" | "sky" | "amber" | "neutral"} className="mt-0.5">
+          <Badge tone={catTone as "loam" | "sky" | "amber" | "neutral"} className="mt-1">
             {category}
           </Badge>
         )}

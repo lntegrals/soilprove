@@ -19,7 +19,7 @@ const fraunces = Fraunces({
 export const metadata: Metadata = {
   title: "SoilProve · Field-specific nitrogen decisions",
   description:
-    "SoilProve translates live USDA soil data and NWS weather into defensible nitrogen decisions for corn — reviewable by an agronomist and validated by a real trial.",
+    "SoilProve translates live USDA soil data and NWS weather into defensible nitrogen decisions for corn, reviewable by an agronomist and validated by a real trial.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -91,7 +91,7 @@ class HeuristicModel implements RecommendationModel {
         category: "soil",
         rationale:
           omDelta < 0
-            ? "Higher organic matter mineralizes additional N — fertilizer needs trim."
+            ? "Higher organic matter mineralizes additional N, trimming fertilizer need."
             : "Lower organic matter offers less seasonal N release.",
       });
     }
@@ -110,8 +110,8 @@ class HeuristicModel implements RecommendationModel {
         category: "soil",
         rationale:
           lossDelta > 0
-            ? "Loss-prone profile — buffer slightly and prefer split application."
-            : "Loss-tolerant profile — efficient soils let us trim a bit.",
+            ? "Loss-prone profile. Buffer slightly and prefer split application."
+            : "Loss-tolerant profile. Efficient soils let us trim a bit.",
       });
     }
 
@@ -133,7 +133,7 @@ class HeuristicModel implements RecommendationModel {
         category: "weather",
         rationale:
           weatherDelta > 0
-            ? "Forecast precipitation raises leaching/denitrification risk — favor a split or stabilizer."
+            ? "Forecast precipitation raises leaching and denitrification risk. Favor a split or stabilizer."
             : "Dry near-term outlook lowers loss risk modestly.",
       });
     }
@@ -202,12 +202,16 @@ function buildExplainer(
     .map((x) => x.label.toLowerCase())
     .join(" and ");
   if (Math.abs(diff) < 5) {
-    return `Confirms your plan near the regional reference — ${top} are the main drivers.`;
+    return `Confirms your plan near the regional reference. ${capitalize(top)} are the main drivers.`;
   }
   if (diff > 0) {
-    return `Trims ${Math.round(diff)} lb/ac vs your plan — ${top} carry the move.`;
+    return `Trims ${Math.round(diff)} lb/ac vs your plan. ${capitalize(top)} carry the move.`;
   }
-  return `Bumps ${Math.abs(Math.round(diff))} lb/ac above your plan — ${top} drive the increase.`;
+  return `Bumps ${Math.abs(Math.round(diff))} lb/ac above your plan. ${capitalize(top)} drive the increase.`;
+}
+
+function capitalize(s: string): string {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 
 function confidenceFor(f: DecisionFeatures, rec: number): {
@@ -232,7 +236,7 @@ function confidenceFor(f: DecisionFeatures, rec: number): {
   }
   if (f.acres < 40) {
     score -= 0.1;
-    flags.push("Small field — outcome tracking noisier");
+    flags.push("Small field, outcome tracking noisier");
   }
   if (f.previousCrop === "soybeans" && f.weatherLossRisk01 < 0.3) {
     score += 0.05;

@@ -22,11 +22,15 @@ export function Stat({
       ? "text-amber2-500"
       : "text-ink-900";
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex min-w-0 flex-col gap-1.5">
       <span className="stat-label">{label}</span>
-      <span className={`stat-num ${toneClass}`}>{value}</span>
+      <span
+        className={`stat-num leading-[1.05] break-words tabular-nums ${toneClass}`}
+      >
+        {value}
+      </span>
       {(hint || delta) && (
-        <span className="text-xs text-ink-500 flex items-center gap-2">
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs leading-snug text-ink-500">
           {delta}
           {hint}
         </span>
@@ -35,9 +39,23 @@ export function Stat({
   );
 }
 
-export function StatRow({ children }: { children: ReactNode }) {
+type StatRowCols = 2 | 3 | 4;
+
+export function StatRow({
+  children,
+  cols = 4,
+}: {
+  children: ReactNode;
+  cols?: StatRowCols;
+}) {
+  const grid =
+    cols === 2
+      ? "grid-cols-2 md:grid-cols-2"
+      : cols === 3
+      ? "grid-cols-2 md:grid-cols-3"
+      : "grid-cols-2 md:grid-cols-2 lg:grid-cols-4";
   return (
-    <div className="grid grid-cols-2 gap-x-4 gap-y-5 md:grid-cols-4">
+    <div className={`grid ${grid} gap-x-6 gap-y-5`}>
       {children}
     </div>
   );

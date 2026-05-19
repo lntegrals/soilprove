@@ -9,6 +9,8 @@ next-env.d.ts
 # Local tooling
 .claude/
 .playwright-mcp/
+.agents/
+skills-lock.json
 
 # Vercel
 .vercel

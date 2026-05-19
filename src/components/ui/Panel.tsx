@@ -25,11 +25,11 @@ export function Panel({
     <section className={`${base} ${className}`}>
       {(title || right) && (
         <header
-          className={`flex items-start justify-between gap-4 px-5 md:px-6 pt-5 md:pt-6 ${
-            children ? "pb-3" : "pb-5"
+          className={`flex items-start justify-between gap-4 px-5 pt-5 md:px-6 md:pt-6 ${
+            children ? "pb-4" : "pb-5"
           }`}
         >
-          <div>
+          <div className="min-w-0 flex-1">
             {title && (
               <h3 className={tone === "dark" ? "text-paper" : "text-ink-900"}>
                 {title}
@@ -37,7 +37,7 @@ export function Panel({
             )}
             {subtitle && (
               <p
-                className={`mt-1 text-sm ${
+                className={`mt-1.5 text-sm leading-relaxed ${
                   tone === "dark" ? "text-ink-200" : "text-ink-500"
                 }`}
               >

@@ -50,15 +50,15 @@ function Hero() {
       <div className="container-page relative grid items-center gap-12 py-20 md:grid-cols-[1.15fr,0.85fr] md:py-28">
         <div>
           <Badge tone="moss" dot className="mb-5">
-            Live USDA + NWS · prototype build
+            Live USDA + NWS
           </Badge>
           <h1 className="text-balance text-[40px] leading-[1.05] tracking-tightish md:text-[64px]">
             Prove what your soil data is worth.
           </h1>
           <p className="mt-5 max-w-xl text-balance text-lg leading-relaxed text-ink-600">
             Field-specific nitrogen decisions grounded in live USDA soil data
-            and National Weather Service forecasts — reviewable by an
-            agronomist, validated by a real trial.
+            and National Weather Service forecasts, reviewable by an agronomist
+            and validated by a real trial.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/workspace" className="btn-primary">
@@ -70,7 +70,7 @@ function Hero() {
           </div>
           <dl className="mt-12 grid max-w-md grid-cols-3 gap-6 border-t border-ink-100 pt-6 text-[13px]">
             <Metric kpi="USDA" sub="SSURGO soil profile" />
-            <Metric kpi="NWS" sub="Forecast / loss risk" />
+            <Metric kpi="NWS" sub="Forecast and loss risk" />
             <Metric kpi="MRTN" sub="Economic baseline" />
           </dl>
         </div>
@@ -106,19 +106,21 @@ function HeroCard() {
             Recommendation · North Bend
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-6 p-6">
+        <div className="grid grid-cols-2 gap-6 px-6 py-7">
           <div>
             <div className="label">Current plan</div>
-            <div className="font-display text-4xl text-ink-900">200<span className="text-base text-ink-400 ml-1">lb/ac</span></div>
-            <div className="mt-1 text-[12px] text-ink-500">Farmer baseline</div>
+            <div className="mt-1.5 font-display text-4xl leading-none text-ink-900">
+              200<span className="ml-1 text-base font-normal text-ink-400">lb/ac</span>
+            </div>
+            <div className="mt-2 text-[12px] text-ink-500">Farmer baseline</div>
           </div>
           <div>
             <div className="label">SoilProve</div>
-            <div className="font-display text-4xl text-moss-700">
-              176<span className="text-base text-ink-400 ml-1">lb/ac</span>
+            <div className="mt-1.5 font-display text-4xl leading-none text-moss-700">
+              176<span className="ml-1 text-base font-normal text-ink-400">lb/ac</span>
             </div>
-            <div className="mt-1 text-[12px] text-moss-700 font-semibold">
-              −24 lb/ac · $1,964 saved
+            <div className="mt-2 text-[12px] font-semibold text-moss-700">
+              −24 lb/ac, $1,964 saved
             </div>
           </div>
         </div>
@@ -171,17 +173,17 @@ function SecondaryBand() {
         <Pillar
           n="01"
           title="A defensible number"
-          body="Recommendations are explainable, not opaque — every lb of N is tied to a soil, weather, agronomic, or economic driver."
+          body="Recommendations are explainable, not opaque. Every pound of N is tied to a soil, weather, agronomic, or economic driver."
         />
         <Pillar
           n="02"
           title="Live field intelligence"
-          body="USDA SSURGO and the National Weather Service are queried against your exact coordinates — not assumed from a region."
+          body="USDA SSURGO and the National Weather Service are queried against your exact coordinates, not assumed from a region."
         />
         <Pillar
           n="03"
           title="Built around the agronomist"
-          body="An agronomist reviews, adjusts, and signs off. A safe trial proves it on one strip before any scale-up."
+          body="An agronomist reviews, adjusts, and signs off. A safe trial proves the rate on one strip before any scale up."
         />
       </div>
     </section>
@@ -208,9 +210,10 @@ function PillarStrip() {
             From a coordinate to a season-end ROI.
           </h2>
         </div>
-        <p className="max-w-md text-sm text-ink-600">
-          Six routed pages, one persistent field state. Live data flows from the
-          first page into the recommendation, into the review, into the trial.
+        <p className="max-w-md text-sm leading-relaxed text-ink-600">
+          Six routed pages, one persistent field state. Live data flows from
+          the first page into the recommendation, into the review, into the
+          trial.
         </p>
       </div>
     </section>
@@ -222,9 +225,9 @@ function Workflow() {
     { n: "01", title: "Field Setup", body: "Identify location, acreage, and economics. Persisted across pages." },
     { n: "02", title: "Field Intelligence", body: "Pull live USDA soil profile and NWS weather for the exact coordinate." },
     { n: "03", title: "Recommendation", body: "Decision console with drivers, economics, confidence and risk." },
-    { n: "04", title: "Agronomist Review", body: "Approve, adjust, or request revision — with rationale." },
+    { n: "04", title: "Agronomist Review", body: "Approve, adjust, or request revision with a written rationale." },
     { n: "05", title: "Trial Planner", body: "Define a low-risk trial strip vs control. Export the plan." },
-    { n: "06", title: "Outcome", body: "Enter harvest results — get a validated / inconclusive verdict." },
+    { n: "06", title: "Outcome", body: "Enter harvest results and get a validated or inconclusive verdict." },
   ];
   return (
     <section className="container-page pb-20">
@@ -255,7 +258,7 @@ function ClosingBand() {
           <h2 className="mt-3 text-balance text-3xl text-paper md:text-4xl">
             Farmers fear yield loss more than they value paper savings. SoilProve closes that gap.
           </h2>
-          <p className="mt-3 max-w-xl text-balance text-ink-200">
+          <p className="mt-3 max-w-xl text-balance leading-relaxed text-ink-200">
             The engine is honest about what is live, what is modeled, and what
             needs a real trial. The architecture is ready to swap in a trained
             yield-response model when the data is in place.
@@ -270,13 +273,13 @@ function ClosingBand() {
           </div>
         </div>
         <div className="rounded-2xl border border-ink-700 bg-ink-800 p-6">
-          <div className="label text-ink-300">For judges</div>
-          <ul className="mt-3 space-y-2 text-sm text-ink-100">
-            <li>· Route-based product · 8 pages</li>
-            <li>· Live USDA NRCS SSURGO integration</li>
-            <li>· Live National Weather Service forecast</li>
-            <li>· Soil + weather feed the recommendation</li>
-            <li>· ML-ready feature vector</li>
+          <div className="label text-ink-300">What is grounded</div>
+          <ul className="mt-3 space-y-2 text-sm leading-relaxed text-ink-100">
+            <li>Live USDA NRCS SSURGO soil profile</li>
+            <li>Live National Weather Service forecast</li>
+            <li>Soil and weather feed the recommendation</li>
+            <li>Transparent rules engine with named drivers</li>
+            <li>ML-ready feature vector for a trained successor</li>
           </ul>
         </div>
       </div>
@@ -289,7 +292,7 @@ function SiteFooter() {
     <footer className="border-t border-ink-100 bg-canvas py-8">
       <div className="container-page flex flex-wrap items-center justify-between gap-3 text-[12px] text-ink-500">
         <Logo />
-        <span>Prove what your soil data is worth · Cape Girardeau Vibeathon</span>
+        <span>Prove what your soil data is worth.</span>
       </div>
     </footer>
   );

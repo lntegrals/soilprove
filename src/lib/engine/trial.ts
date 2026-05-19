@@ -60,11 +60,11 @@ export function summarizeOutcome(args: {
 
   let verdict: "validated" | "inconclusive" | "needs_more_data" = "inconclusive";
   let note =
-    "Margin moved, but inside the modeled noise band — run another season before scaling.";
+    "Margin moved, but inside the modeled noise band. Run another season before scaling.";
 
   if (marginDelta > 8 * acres && yieldDelta > -2) {
     verdict = "validated";
-    note = "Fertilizer down, yield held — margin improvement clears the noise band.";
+    note = "Fertilizer down, yield held. Margin improvement clears the noise band.";
   } else if (yieldDelta < -4) {
     verdict = "needs_more_data";
     note = "Yield drop exceeds the comfort band. Walk the field before repeating.";
